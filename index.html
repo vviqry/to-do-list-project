@@ -1,0 +1,980 @@
+<script type="text/javascript">
+var gk_isXlsx = false;
+var gk_xlsxFileLookup = {};
+var gk_fileData = {};
+
+function filledCell(cell) {
+    return cell !== '' && cell != null;
+}
+
+function loadFileData(filename) {
+    if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+        try {
+            var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+            var firstSheetName = workbook.SheetNames[0];
+            var worksheet = workbook.Sheets[firstSheetName];
+
+            // Convert sheet to JSON to filter blank rows
+            var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+            // Filter out blank rows (rows where all cells are empty, null, or undefined)
+            var filteredData = jsonData.filter(row => row.some(filledCell));
+
+            // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+            var headerRowIndex = filteredData.findIndex((row, index) =>
+                row.filter(filledCell).length >= filteredData[index + 1] ? .filter(filledCell).length
+            );
+            // Fallback
+            if (headerRowIndex === -1 || headerRowIndex > 25) {
+                headerRowIndex = 0;
+            }
+
+            // Convert filtered JSON back to CSV
+            var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+            csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+            return csv;
+        } catch (e) {
+            console.error(e);
+            return "";
+        }
+    }
+    return gk_fileData[filename] || "";
+}
+</script>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio To-Do List</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+        body {
+  background-color: #f5f0e1; /* Cream yang soft */
+}
+        .container {
+  background: white;
+  margin-top: 15px;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+}
+        .task-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .task-item:hover {
+            background-color: #e9ecef;
+        }
+        .task-label {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        .task-completed {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        .category-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .collapse-content {
+            padding: 10px;
+            background-color: #f1f3f5;
+            border-radius: 5px;
+        }
+        .checkbox {
+            margin-right: 10px;
+        }
+        .list-wrapper {
+  margin-top: 1.5rem; /* jarak dari elemen atas */
+  background-color: #ffffff;
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.list-wrapper ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.list-wrapper li {
+  margin-bottom: 0.75rem;
+  line-height: 1;
+}
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <h3>Project Progress</h3>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            </div>
+        </div>
+        <!-- Dummy & Bisnis -->
+        <div class="category-title">📦 Dummy & Bisnis</div>
+        <!-- 1. Login Register Web -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="login-register-check">
+            <label class="task-label" for="login-register-check" data-bs-toggle="collapse" data-bs-target="#login-register-tips">Login Register Web</label>
+        </div>
+        <div class="collapse collapse-content" id="login-register-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Bootstrap untuk UI form yang responsive.</li>
+                <li>Validasi input dengan JavaScript atau HTML5.</li>
+                <li>Simpan data dummy di <code>localStorage</code> atau <code>JSON</code> file lokal.</li>
+                <li>Tambahkan alert login berhasil/gagal dengan <code>alert()</code> atau modal Bootstrap.</li>
+            </ul>
+        </div>
+        <!-- 2. Homepage Web -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="homepage-check">
+            <label class="task-label" for="homepage-check" data-bs-toggle="collapse" data-bs-target="#homepage-tips">Homepage Web</label>
+        </div>
+        <div class="collapse collapse-content" id="homepage-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan hero section dengan judul besar dan tombol aksi (CTA).</li>
+                <li>Buat layout dengan Bootstrap Grid atau Flexbox.</li>
+                <li>Optimasi gambar agar loading cepat.</li>
+                <li>Tambahkan efek animasi ringan pakai AOS atau CSS transition.</li>
+            </ul>
+        </div>
+        <!-- 3. Porto/CV Web -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="cv-check">
+            <label class="task-label" for="cv-check" data-bs-toggle="collapse" data-bs-target="#cv-tips">Porto/CV Web</label>
+        </div>
+        <div class="collapse collapse-content" id="cv-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan desain bersih, fokus ke tipografi dan layout.</li>
+                <li>Tampilkan proyek, skill, kontak, dan link GitHub/LinkedIn.</li>
+                <li>Gunakan icon dari Font Awesome untuk visual menarik.</li>
+                <li>Tambahkan tombol unduh CV (PDF).</li>
+            </ul>
+        </div>
+        <!-- 4. Admin Dashboard Web -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="dashboard-check">
+            <label class="task-label" for="dashboard-check" data-bs-toggle="collapse" data-bs-target="#dashboard-tips">Admin Dashboard Web</label>
+        </div>
+        <div class="collapse collapse-content" id="dashboard-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan layout sidebar + navbar.</li>
+                <li>Tampilkan statistik dengan Chart.js atau ApexCharts.</li>
+                <li>Buat dummy data user/produk dan tampilkan dalam tabel.</li>
+                <li>Gunakan tab, dropdown, dan modal untuk interaksi.</li>
+            </ul>
+        </div>
+        <!-- 5. Kalkulator App -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="calc-check">
+            <label class="task-label" for="calc-check" data-bs-toggle="collapse" data-bs-target="#calc-tips">Kalkulator App</label>
+        </div>
+        <div class="collapse collapse-content" id="calc-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan tombol angka dan operator dengan event listener.</li>
+                <li>Hitung ekspresi pakai <code>eval()</code> (hati-hati validasinya).</li>
+                <li>Gunakan grid CSS atau Flexbox untuk layout tombol.</li>
+                <li>Tambahkan dark mode toggle agar lebih modern.</li>
+            </ul>
+        </div>
+        <!-- 6. To do list/Note App -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="todo-check">
+            <label class="task-label" for="todo-check" data-bs-toggle="collapse" data-bs-target="#todo-tips">To do list/Note App</label>
+        </div>
+        <div class="collapse collapse-content" id="todo-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan data list.</li>
+                <li>Tambahkan fitur checklist, edit, dan hapus item.</li>
+                <li>Gunakan elemen <code>contenteditable</code> untuk edit langsung.</li>
+                <li>Tambahkan filter: semua, selesai, belum selesai.</li>
+            </ul>
+        </div>
+        <!-- 7. Chat App -->
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="chat-check">
+            <label class="task-label" for="chat-check" data-bs-toggle="collapse" data-bs-target="#chat-tips">Chat App</label>
+        </div>
+        <div class="collapse collapse-content" id="chat-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Buat UI chat bubble dengan Flexbox (kanan & kiri).</li>
+                <li>Simpan chat di array JavaScript atau <code>localStorage</code>.</li>
+                <li>Tambahkan auto-scroll ke bawah saat pesan baru masuk.</li>
+                <li>Simulasikan percakapan dummy atau integrasi dengan Chat API.</li>
+            </ul>
+        </div>
+        <!-- Tools Produktivitas -->
+        <div class="category-title">🛠️ Tools Produktivitas</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="pomodoro-check">
+            <label class="task-label" for="pomodoro-check" data-bs-toggle="collapse" data-bs-target="#pomodoro-tips">Pomodoro Timer + Pelacak Produktivitas</label>
+        </div>
+        <div class="collapse collapse-content" id="pomodoro-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>setInterval</code> untuk timer 25 menit + 5 menit istirahat.</li>
+                <li>Simpan riwayat sesi di <code>localStorage</code> untuk melacak produktivitas.</li>
+                <li>Tambahkan notifikasi suara saat timer selesai (gunakan <code>Audio</code> API).</li>
+                <li>Integrasikan grafik sederhana dengan Chart.js untuk visualisasi sesi.</li>
+                <li>Host di Netlify untuk deployment cepat.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="password-check">
+            <label class="task-label" for="password-check" data-bs-toggle="collapse" data-bs-target="#password-tips">Password Generator dengan kriteria kompleksitas</label>
+        </div>
+        <div class="collapse collapse-content" id="password-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Buat opsi untuk panjang kata sandi, huruf besar/kecil, angka, dan simbol.</li>
+                <li>Gunakan <code>Math.random()</code> untuk menghasilkan karakter acak.</li>
+                <li>Tambahkan indikator kekuatan kata sandi berdasarkan entropi.</li>
+                <li>Desain UI dengan Bootstrap form controls untuk input kompleksitas.</li>
+                <li>Simpan kata sandi yang dihasilkan di clipboard menggunakan <code>navigator.clipboard</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="markdown-check">
+            <label class="task-label" for="markdown-check" data-bs-toggle="collapse" data-bs-target="#markdown-tips">Markdown Editor dengan pratinjau langsung</label>
+        </div>
+        <div class="collapse collapse-content" id="markdown-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan library seperti <code>marked.js</code> untuk parsing Markdown ke HTML.</li>
+                <li>Buat dua panel (editor dan pratinjau) menggunakan Bootstrap grid.</li>
+                <li>Update pratinjau secara real-time dengan <code>oninput</code> event.</li>
+                <li>Tambahkan tombol ekspor ke HTML/PDF menggunakan jsPDF.</li>
+                <li>Simpan draft di <code>localStorage</code> untuk persistensi.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="expense-check">
+            <label class="task-label" for="expense-check" data-bs-toggle="collapse" data-bs-target="#expense-tips">Expense Tracker dengan grafik pengeluaran</label>
+        </div>
+        <div class="collapse collapse-content" id="expense-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan data pengeluaran.</li>
+                <li>Integrasikan Chart.js untuk grafik pie/bar pengeluaran per kategori.</li>
+                <li>Buat form Bootstrap untuk input tanggal, jumlah, dan kategori.</li>
+                <li>Tambahkan filter berdasarkan waktu (mingguan/bulanan).</li>
+                <li>Desain responsif dengan Bootstrap untuk tampilan mobile.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="unit-check">
+            <label class="task-label" for="unit-check" data-bs-toggle="collapse" data-bs-target="#unit-tips">Unit Converter (mata uang, suhu, panjang, dll)</label>
+        </div>
+        <div class="collapse collapse-content" id="unit-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan API seperti <code>exchangerate-api.com</code> untuk konversi mata uang real-time.</li>
+                <li>Buat dropdown dengan Bootstrap untuk memilih jenis konversi.</li>
+                <li>Gunakan fungsi JavaScript untuk konversi statis (suhu, panjang).</li>
+                <li>Tambahkan validasi input untuk mencegah error.</li>
+                <li>Simpan riwayat konversi di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="resume-check">
+            <label class="task-label" for="resume-check" data-bs-toggle="collapse" data-bs-target="#resume-tips">Resume/CV Builder dengan template ekspor PDF</label>
+        </div>
+        <div class="collapse collapse-content" id="resume-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Bootstrap form untuk input data pengguna (nama, pengalaman, dll).</li>
+                <li>Buat beberapa template CV dengan CSS.</li>
+                <li>Gunakan jsPDF untuk ekspor ke PDF.</li>
+                <li>Tambahkan preview real-time dari CV yang dibuat.</li>
+                <li>Simpan data CV di <code>localStorage</code> untuk pengeditan ulang.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="meeting-check">
+            <label class="task-label" for="meeting-check" data-bs-toggle="collapse" data-bs-target="#meeting-tips">Meeting Scheduler dengan integrasi Google Calendar API</label>
+        </div>
+        <div class="collapse collapse-content" id="meeting-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Google Calendar API untuk membuat/jadwalkan event.</li>
+                <li>Autentikasi dengan OAuth 2.0 untuk akses kalender.</li>
+                <li>Buat form Bootstrap untuk input waktu, peserta, dan deskripsi.</li>
+                <li>Tambahkan validasi untuk mencegah konflik jadwal.</li>
+                <li>Gunakan Bootstrap modal untuk konfirmasi penjadwalan.</li>
+            </ul>
+        </div>
+        <!-- Game & Interaktif -->
+        <div class="category-title">🎮 Game & Interaktif</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="memory-check">
+            <label class="task-label" for="memory-check" data-bs-toggle="collapse" data-bs-target="#memory-tips">Memory Card Game dengan sistem skor</label>
+        </div>
+        <div class="collapse collapse-content" id="memory-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan array untuk menyimpan kartu dan acak dengan <code>sort</code> + <code>Math.random</code>.</li>
+                <li>Desain kartu dengan Bootstrap card component.</li>
+                <li>Simpan skor tertinggi di <code>localStorage</code>.</li>
+                <li>Tambahkan animasi flip dengan CSS <code>transform</code>.</li>
+                <li>Host di GitHub Pages untuk akses mudah.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="tictactoe-check">
+            <label class="task-label" for="tictactoe-check" data-bs-toggle="collapse" data-bs-target="#tictactoe-tips">Tic-Tac-Toe vs AI atau multiplayer lokal</label>
+        </div>
+        <div class="collapse collapse-content" id="tictactoe-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Implementasikan AI sederhana dengan algoritma Minimax.</li>
+                <li>Gunakan Bootstrap grid untuk papan 3x3.</li>
+                <li>Simpan riwayat permainan di <code>localStorage</code>.</li>
+                <li>Tambahkan opsi reset dan pilih mode (AI/multiplayer).</li>
+                <li>Gunakan CSS untuk animasi simbol X/O.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="quiz-check">
+            <label class="task-label" for="quiz-check" data-bs-toggle="collapse" data-bs-target="#quiz-tips">Quiz App dengan kategori variabel (gunakan Open Trivia API)</label>
+        </div>
+        <div class="collapse collapse-content" id="quiz-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Open Trivia API untuk mengambil soal dinamis.</li>
+                <li>Buat UI dengan Bootstrap untuk menampilkan soal dan opsi.</li>
+                <li>Simpan skor dan riwayat di <code>localStorage</code>.</li>
+                <li>Tambahkan timer untuk setiap soal menggunakan <code>setTimeout</code>.</li>
+                <li>Desain responsif untuk pengalaman mobile.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="pixel-check">
+            <label class="task-label" for="pixel-check" data-bs-toggle="collapse" data-bs-target="#pixel-tips">Pixel Art Drawing Board dengan palette warna</label>
+        </div>
+        <div class="collapse collapse-content" id="pixel-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>canvas</code> HTML5 untuk drawing board.</li>
+                <li>Buat palette warna dengan Bootstrap buttons.</li>
+                <li>Tambahkan fitur undo/redo menggunakan array history.</li>
+                <li>Simpan karya seni di <code>localStorage</code> atau ekspor ke PNG.</li>
+                <li>Tambahkan grid toggle untuk memudahkan pixel art.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="piano-check">
+            <label class="task-label" for="piano-check" data-bs-toggle="collapse" data-bs-target="#piano-tips">Virtual Piano dengan suara interaktif</label>
+        </div>
+        <div class="collapse collapse-content" id="piano-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>Audio</code> API untuk memutar suara nada.</li>
+                <li>Desain tuts piano dengan Bootstrap buttons dan CSS.</li>
+                <li>Tambahkan dukungan input keyboard dengan <code>keydown</code> event.</li>
+                <li>Simpan rekaman sederhana di <code>localStorage</code>.</li>
+                <li>Gunakan library seperti Tone.js untuk suara lebih realistis.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="2048-check">
+            <label class="task-label" for="2048-check" data-bs-toggle="collapse" data-bs-target="#2048-tips">2048 Clone atau game puzzle lainnya</label>
+        </div>
+        <div class="collapse collapse-content" id="2048-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Bootstrap grid untuk papan permainan 4x4.</li>
+                <li>Implementasikan logika geser dengan JavaScript.</li>
+                <li>Simpan skor tertinggi di <code>localStorage</code>.</li>
+                <li>Tambahkan animasi geser dengan CSS <code>transition</code>.</li>
+                <li>Buat desain responsif untuk mobile.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="typing-check">
+            <label class="task-label" for="typing-check" data-bs-toggle="collapse" data-bs-target="#typing-tips">Typing Speed Test dengan analisis WPM</label>
+        </div>
+        <div class="collapse collapse-content" id="typing-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan teks acak dari array atau API seperti Quotable.</li>
+                <li>Hitung WPM dengan <code>setInterval</code> dan jumlah kata.</li>
+                <li>Desain input dan teks dengan Bootstrap form.</li>
+                <li>Simpan riwayat tes di <code>localStorage</code>.</li>
+                <li>Tambahkan highlight untuk kata yang benar/salah.</li>
+            </ul>
+        </div>
+        <!-- Web Apps Modern -->
+        <div class="category-title">🌐 Web Apps Modern</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="chat-check">
+            <label class="task-label" for="chat-check" data-bs-toggle="collapse" data-bs-target="#chat-tips">Real-time Chat (gunakan Firebase atau WebSocket)</label>
+        </div>
+        <div class="collapse collapse-content" id="chat-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Firebase Realtime Database untuk chat sederhana.</li>
+                <li>Desain UI chat dengan Bootstrap list group.</li>
+                <li>Tambahkan autentikasi anonim untuk pengguna.</li>
+                <li>Gunakan <code>scrollIntoView</code> untuk auto-scroll ke pesan terbaru.</li>
+                <li>Host di Firebase Hosting untuk skalabilitas.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="recipe-check">
+            <label class="task-label" for="recipe-check" data-bs-toggle="collapse" data-bs-target="#recipe-tips">Recipe Finder dengan API seperti Edamam</label>
+        </div>
+        <div class="collapse collapse-content" id="recipe-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Edamam API untuk mencari resep berdasarkan bahan.</li>
+                <li>Desain kartu resep dengan Bootstrap card component.</li>
+                <li>Tambahkan filter untuk diet atau waktu masak.</li>
+                <li>Simpan resep favorit di <code>localStorage</code>.</li>
+                <li>Gunakan Bootstrap modal untuk detail resep.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="book-check">
+            <label class="task-label" for="book-check" data-bs-toggle="collapse" data-bs-target="#book-tips">Book Finder integrasi Google Books API</label>
+        </div>
+        <div class="collapse collapse-content" id="book-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Google Books API untuk pencarian buku.</li>
+                <li>Tampilkan hasil dengan Bootstrap cards.</li>
+                <li>Tambahkan fitur pencarian berdasarkan judul/penulis.</li>
+                <li>Simpan daftar baca di <code>localStorage</code>.</li>
+                <li>Gunakan Bootstrap pagination untuk hasil panjang.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="movie-check">
+            <label class="task-label" for="movie-check" data-bs-toggle="collapse" data-bs-target="#movie-tips">Movie Database Browser (gunakan TMDB API)</label>
+        </div>
+        <div class="collapse collapse-content" id="movie-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan TMDB API untuk data film dan rating.</li>
+                <li>Desain kartu film dengan Bootstrap card component.</li>
+                <li>Tambahkan filter genre dan sorting berdasarkan popularitas.</li>
+                <li>Simpan watchlist di <code>localStorage</code>.</li>
+                <li>Gunakan Bootstrap modal untuk detail film.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="weather-check">
+            <label class="task-label" for="weather-check" data-bs-toggle="collapse" data-bs-target="#weather-tips">Weather App dengan geolokasi & animasi cuaca</label>
+        </div>
+        <div class="collapse collapse-content" id="weather-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan OpenWeatherMap API untuk data cuaca.</li>
+                <li>Gunakan <code>navigator.geolocation</code> untuk lokasi pengguna.</li>
+                <li>Tambahkan animasi CSS untuk ikon cuaca (misalnya, hujan).</li>
+                <li>Desain UI dengan Bootstrap cards untuk prakiraan harian.</li>
+                <li>Simpan lokasi favorit di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="news-check">
+            <label class="task-label" for="news-check" data-bs-toggle="collapse" data-bs-target="#news-tips">News Aggregator dari berbagai sumber API</label>
+        </div>
+        <div class="collapse collapse-content" id="news-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan NewsAPI untuk mengambil berita dari berbagai sumber.</li>
+                <li>Tampilkan artikel dengan Bootstrap cards.</li>
+                <li>Tambahkan filter berdasarkan kategori atau sumber.</li>
+                <li>Simpan artikel favorit di <code>localStorage</code>.</li>
+                <li>Gunakan Bootstrap pagination untuk navigasi artikel.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="ecommerce-check">
+            <label class="task-label" for="ecommerce-check" data-bs-toggle="collapse" data-bs-target="#ecommerce-tips">E-commerce Product Catalog + keranjang belanja</label>
+        </div>
+        <div class="collapse collapse-content" id="ecommerce-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan data dummy atau API seperti Fake Store API.</li>
+                <li>Desain katalog produk dengan Bootstrap grid.</li>
+                <li>Simpan keranjang belanja di <code>localStorage</code>.</li>
+                <li>Tambahkan fitur filter dan pencarian produk.</li>
+                <li>Gunakan Bootstrap modal untuk detail produk.</li>
+            </ul>
+        </div>
+        <!-- Kreatif & Visual -->
+        <div class="category-title">🎨 Kreatif & Visual</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="cssart-check">
+            <label class="task-label" for="cssart-check" data-bs-toggle="collapse" data-bs-target="#cssart-tips">CSS Art Gallery (illustrasi murni CSS)</label>
+        </div>
+        <div class="collapse collapse-content" id="cssart-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Buat ilustrasi sederhana seperti ikon atau karakter dengan CSS.</li>
+                <li>Gunakan Bootstrap grid untuk galeri.</li>
+                <li>Tambahkan hover effect untuk interaktivitas.</li>
+                <li>Simpan desain favorit di <code>localStorage</code>.</li>
+                <li>Host di GitHub Pages untuk showcase.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="svg-check">
+            <label class="task-label" for="svg-check" data-bs-toggle="collapse" data-bs-target="#svg-tips">Animated SVG Landing Page</label>
+        </div>
+        <div class="collapse collapse-content" id="svg-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan SVG untuk ikon atau ilustrasi animasi.</li>
+                <li>Terapkan animasi dengan CSS <code>@keyframes</code>.</li>
+                <li>Gunakan Bootstrap untuk layout landing page.</li>
+                <li>Tambahkan dark/light mode dengan CSS variables.</li>
+                <li>Host di Vercel untuk performa cepat.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="gradient-check">
+            <label class="task-label" for="gradient-check" data-bs-toggle="collapse" data-bs-target="#gradient-tips">Gradient Generator dengan kode ekspor</label>
+        </div>
+        <div class="collapse collapse-content" id="gradient-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>input type="color"</code> untuk memilih warna.</li>
+                <li>Generate CSS gradient dengan JavaScript.</li>
+                <li>Tambahkan tombol copy kode CSS ke clipboard.</li>
+                <li>Desain UI dengan Bootstrap form.</li>
+                <li>Simpan gradient favorit di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="meme-check">
+            <label class="task-label" for="meme-check" data-bs-toggle="collapse" data-bs-target="#meme-tips">Meme Generator dengan upload gambar & text</label>
+        </div>
+        <div class="collapse collapse-content" id="meme-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>canvas</code> untuk menggambar teks pada gambar.</li>
+                <li>Desain form upload dengan Bootstrap.</li>
+                <li>Tambahkan opsi untuk mengubah font dan posisi teks.</li>
+                <li>Ekspor meme ke PNG menggunakan <code>canvas.toDataURL</code>.</li>
+                <li>Simpan meme di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="animation-check">
+            <label class="task-label" for="animation-check" data-bs-toggle="collapse" data-bs-target="#animation-tips">CSS Animation Playground (custom keyframes)</label>
+        </div>
+        <div class="collapse collapse-content" id="animation-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Buat form untuk input parameter animasi (durasi, delay, dll).</li>
+                <li>Gunakan CSS <code>@keyframes</code> untuk animasi dinamis.</li>
+                <li>Desain UI dengan Bootstrap form.</li>
+                <li>Tambahkan preview real-time untuk animasi.</li>
+                <li>Simpan animasi favorit di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="3dcard-check">
+            <label class="task-label" for="3dcard-check" data-bs-toggle="collapse" data-bs-target="#3dcard-tips">3D Card Flip Effects dengan transform CSS</label>
+        </div>
+        <div class="collapse collapse-content" id="3dcard-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan CSS <code>transform: rotateY</code> untuk efek flip.</li>
+                <li>Desain kartu dengan Bootstrap card component.</li>
+                <li>Tambahkan hover/touch untuk memicu animasi.</li>
+                <li>Gunakan <code>perspective</code> untuk efek 3D realistis.</li>
+                <li>Host di Netlify untuk showcase.</li>
+            </ul>
+        </div>
+        <!-- Data & Visualisasi -->
+        <div class="category-title">📊 Data & Visualisasi</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="bmi-check">
+            <label class="task-label" for="bmi-check" data-bs-toggle="collapse" data-bs-target="#bmi-tips">BMI Calculator + grafik kesehatan</label>
+        </div>
+        <div class="collapse collapse-content" id="bmi-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan formula BMI (berat/tinggi²).</li>
+                <li>Desain form input dengan Bootstrap.</li>
+                <li>Tambahkan grafik kesehatan dengan Chart.js.</li>
+                <li>Simpan riwayat BMI di <code>localStorage</code>.</li>
+                <li>Tambahkan kategori BMI (underweight, normal, dll).</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="poll-check">
+            <label class="task-label" for="poll-check" data-bs-toggle="collapse" data-bs-target="#poll-tips">Poll/Voting System dengan chart hasil real-time</label>
+        </div>
+        <div class="collapse collapse-content" id="poll-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan hasil voting.</li>
+                <li>Tampilkan hasil dengan Chart.js (pie/bar).</li>
+                <li>Desain form voting dengan Bootstrap.</li>
+                <li>Tambahkan validasi untuk mencegah voting ganda.</li>
+                <li>Update chart secara real-time dengan JavaScript.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="crypto-check">
+            <label class="task-label" for="crypto-check" data-bs-toggle="collapse" data-bs-target="#crypto-tips">Cryptocurrency Price Tracker (CoinGecko API)</label>
+        </div>
+        <div class="collapse collapse-content" id="crypto-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan CoinGecko API untuk harga real-time.</li>
+                <li>Tampilkan data dengan Bootstrap table atau cards.</li>
+                <li>Tambahkan filter untuk mata uang tertentu.</li>
+                <li>Simpan favorit di <code>localStorage</code>.</li>
+                <li>Gunakan Chart.js untuk grafik harga historis.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="covid-check">
+            <label class="task-label" for="covid-check" data-bs-toggle="collapse" data-bs-target="#covid-tips">COVID-19 Tracker dengan peta interaktif</label>
+        </div>
+        <div class="collapse collapse-content" id="covid-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan API seperti Disease.sh untuk data COVID-19.</li>
+                <li>Integrasikan Leaflet.js untuk peta interaktif.</li>
+                <li>Tampilkan data dengan Bootstrap cards.</li>
+                <li>Tambahkan filter berdasarkan negara.</li>
+                <li>Simpan riwayat pencarian di <code>localStorage</code>.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="finance-check">
+            <label class="task-label" for="finance-check" data-bs-toggle="collapse" data-bs-target="#finance-tips">Personal Finance Dashboard (grafik pie/bar)</label>
+        </div>
+        <div class="collapse collapse-content" id="finance-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan data keuangan.</li>
+                <li>Tampilkan grafik dengan Chart.js.</li>
+                <li>Desain dashboard dengan Bootstrap grid.</li>
+                <li>Tambahkan filter berdasarkan kategori/waktu.</li>
+                <li>Buat desain responsif untuk mobile.</li>
+            </ul>
+        </div>
+        <!-- Mini Projects Unik -->
+        <div class="category-title">🧩 Mini Projects Unik</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="clock-check">
+            <label class="task-label" for="clock-check" data-bs-toggle="collapse" data-bs-target="#clock-tips">Digital Clock dengan tema dark/light</label>
+        </div>
+        <div class="collapse collapse-content" id="clock-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>setInterval</code> untuk update waktu real-time.</li>
+                <li>Desain jam dengan Bootstrap dan CSS.</li>
+                <li>Tambahkan tombol toggle untuk dark/light mode.</li>
+                <li>Simpan preferensi tema di <code>localStorage</code>.</li>
+                <li>Tambahkan animasi jarum jam dengan CSS.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="qrcode-check">
+            <label class="task-label" for="qrcode-check" data-bs-toggle="collapse" data-bs-target="#qrcode-tips">QR Code Generator dari input teks</label>
+        </div>
+        <div class="collapse collapse-content" id="qrcode-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan library seperti <code>qrcode.js</code> untuk generate QR.</li>
+                <li>Desain form input dengan Bootstrap.</li>
+                <li>Tambahkan opsi untuk mengunduh QR sebagai PNG.</li>
+                <li>Simpan riwayat QR di <code>localStorage</code>.</li>
+                <li>Validasi input untuk mencegah error.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="quote-check">
+            <label class="task-label" for="quote-check" data-bs-toggle="collapse" data-bs-target="#quote-tips">Random Quote Machine (gunakan API quotes)</label>
+        </div>
+        <div class="collapse collapse-content" id="quote-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Quotable API untuk kutipan acak.</li>
+                <li>Tampilkan kutipan dengan Bootstrap card.</li>
+                <li>Tambahkan tombol untuk generate kutipan baru.</li>
+                <li>Simpan kutipan favorit di <code>localStorage</code>.</li>
+                <li>Tambahkan animasi fade dengan CSS.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="age-check">
+            <label class="task-label" for="age-check" data-bs-toggle="collapse" data-bs-target="#age-tips">Age Calculator dengan animasi</label>
+        </div>
+        <div class="collapse collapse-content" id="age-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>Date</code> object untuk menghitung umur.</li>
+                <li>Desain form input dengan Bootstrap.</li>
+                <li>Tambahkan animasi angka dengan CSS atau JavaScript.</li>
+                <li>Simpan riwayat perhitungan di <code>localStorage</code>.</li>
+                <li>Validasi input tanggal untuk mencegah error.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="countdown-check">
+            <label class="task-label" for="countdown-check" data-bs-toggle="collapse" data-bs-target="#countdown-tips">Countdown Timer untuk event spesifik</label>
+        </div>
+        <div class="collapse collapse-content" id="countdown-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>setInterval</code> untuk update timer.</li>
+                <li>Desain UI dengan Bootstrap untuk input tanggal event.</li>
+                <li>Tambahkan animasi countdown dengan CSS.</li>
+                <li>Simpan event di <code>localStorage</code>.</li>
+                <li>Tambahkan notifikasi saat timer selesai.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="music-check">
+            <label class="task-label" for="music-check" data-bs-toggle="collapse" data-bs-target="#music-tips">Music Player dengan playlist & visualizer</label>
+        </div>
+        <div class="collapse collapse-content" id="music-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>Audio</code> API untuk pemutar musik.</li>
+                <li>Desain playlist dengan Bootstrap list group.</li>
+                <li>Tambahkan visualizer dengan <code>canvas</code> dan Web Audio API.</li>
+                <li>Simpan playlist di <code>localStorage</code>.</li>
+                <li>Gunakan file audio dummy untuk testing.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="parallax-check">
+            <label class="task-label" for="parallax-check" data-bs-toggle="collapse" data-bs-target="#parallax-tips">Parallax Scrolling Website bertema cerita</label>
+        </div>
+        <div class="collapse collapse-content" id="parallax-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan CSS <code>background-attachment: fixed</code> untuk efek parallax.</li>
+                <li>Desain section dengan Bootstrap untuk struktur cerita.</li>
+                <li>Tambahkan animasi fade-in dengan IntersectionObserver.</li>
+                <li>Gunakan gambar berkualitas tinggi untuk visual.</li>
+                <li>Host di Vercel untuk performa optimal.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="simon-check">
+            <label class="task-label" for="simon-check" data-bs-toggle="collapse" data-bs-target="#simon-tips">Simon Says Game dengan pola warna/suara</label>
+        </div>
+        <div class="collapse collapse-content" id="simon-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan array untuk menyimpan pola acak.</li>
+                <li>Desain tombol dengan Bootstrap buttons.</li>
+                <li>Gunakan <code>Audio</code> API untuk suara tiap warna.</li>
+                <li>Simpan skor tertinggi di <code>localStorage</code>.</li>
+                <li>Tambahkan animasi flash dengan CSS.</li>
+            </ul>
+        </div>
+        <!-- Bonus Kompleks -->
+        <div class="category-title">💡 Bonus Kompleks</div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="kanban-check">
+            <label class="task-label" for="kanban-check" data-bs-toggle="collapse" data-bs-target="#kanban-tips">Kanban Board (Trello-like) dengan drag-n-drop</label>
+        </div>
+        <div class="collapse collapse-content" id="kanban-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan HTML5 Drag and Drop API untuk fungsi drag.</li>
+                <li>Desain board dengan Bootstrap grid.</li>
+                <li>Simpan task di <code>localStorage</code>.</li>
+                <li>Tambahkan form untuk membuat task baru.</li>
+                <li>Gunakan Bootstrap modal untuk edit task.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="blog-check">
+            <label class="task-label" for="blog-check" data-bs-toggle="collapse" data-bs-target="#blog-tips">Blog Platform dengan localStorage/CMS dummy</label>
+        </div>
+        <div class="collapse collapse-content" id="blog-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan postingan.</li>
+                <li>Desain layout blog dengan Bootstrap cards.</li>
+                <li>Tambahkan form untuk membuat/edit postingan.</li>
+                <li>Gunakan marked.js untuk dukungan Markdown.</li>
+                <li>Tambahkan fitur pencarian sederhana.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="snippet-check">
+            <label class="task-label" for="snippet-check" data-bs-toggle="collapse" data-bs-target="#snippet-tips">Code Snippet Manager dengan syntax highlighting</label>
+        </div>
+        <div class="collapse collapse-content" id="snippet-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan Prism.js atau Highlight.js untuk syntax highlighting.</li>
+                <li>Simpan snippet di <code>localStorage</code>.</li>
+                <li>Desain UI dengan Bootstrap untuk daftar snippet.</li>
+                <li>Tambahkan fitur kategori atau tag untuk organisasi.</li>
+                <li>Gunakan Bootstrap modal untuk edit snippet.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="whiteboard-check">
+            <label class="task-label" for="whiteboard-check" data-bs-toggle="collapse" data-bs-target="#whiteboard-tips">Collaborative Whiteboard (real-time drawing)</label>
+        </div>
+        <div class="collapse collapse-content" id="whiteboard-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>canvas</code> untuk drawing board.</li>
+                <li>Integrasikan Firebase untuk kolaborasi real-time.</li>
+                <li>Desain toolbar dengan Bootstrap buttons.</li>
+                <li>Tambahkan fitur undo/redo dan ekspor gambar.</li>
+                <li>Host di Firebase Hosting untuk skalabilitas.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="flashcard-check">
+            <label class="task-label" for="flashcard-check" data-bs-toggle="collapse" data-bs-target="#flashcard-tips">Language Learning Flashcards dengan audio</label>
+        </div>
+        <div class="collapse collapse-content" id="flashcard-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>Audio</code> API untuk suara kata.</li>
+                <li>Desain kartu dengan Bootstrap card component.</li>
+                <li>Simpan kartu di <code>localStorage</code>.</li>
+                <li>Tambahkan fitur flip kartu dengan CSS <code>transform</code>.</li>
+                <li>Gunakan API seperti Forvo untuk audio pengucapan.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="fitness-check">
+            <label class="task-label" for="fitness-check" data-bs-toggle="collapse" data-bs-target="#fitness-tips">Fitness Tracker + workout planner</label>
+        </div>
+        <div class="collapse collapse-content" id="fitness-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Gunakan <code>localStorage</code> untuk menyimpan data workout.</li>
+                <li>Desain planner dengan Bootstrap grid.</li>
+                <li>Tambahkan grafik progres dengan Chart.js.</li>
+                <li>Buat form untuk input latihan dan durasi.</li>
+                <li>Tambahkan notifikasi untuk pengingat latihan.</li>
+            </ul>
+        </div>
+        <div class="task-item">
+            <input type="checkbox" class="checkbox" id="chatbot-check">
+            <label class="task-label" for="chatbot-check" data-bs-toggle="collapse" data-bs-target="#chatbot-tips">AI-Powered Chatbot sederhana (gunakan Dialogflow)</label>
+        </div>
+        <div class="collapse collapse-content" id="chatbot-tips">
+            <strong>Tips & Trik:</strong>
+            <ul>
+                <li>Integrasikan Dialogflow untuk logika chatbot.</li>
+                <li>Desain UI chat dengan Bootstrap list group.</li>
+                <li>Tambahkan animasi ketik dengan CSS.</li>
+                <li>Simpan riwayat chat di <code>localStorage</code>.</li>
+                <li>Host di Netlify untuk akses mudah.</li>
+            </ul>
+        </div>
+        <div class="list-wrapper">
+  <ul>
+    <li>Manfaatkan API publik untuk data dinamis (contoh: 
+      <a href="https://public-apis.io" target="_blank" rel="noopener noreferrer">Public APIs</a>).
+    </li>
+    <li>Tambahkan fitur dark/light mode untuk menunjukkan skill UX.</li>
+    <li>Gunakan <code>localStorage</code> untuk simulasi database lokal.</li>
+    <li>Tulis dokumentasi singkat di file <code>README.md</code> GitHub.</li>
+    <li>Host gratis di GitHub Pages, Vercel, atau Netlify.</li>
+    <li>Bagikan hasil project di LinkedIn, Twitter, atau Medium.</li>
+    <li>Buat video pendek demo proyek (pakai Loom, OBS, atau screen recorder).</li>
+    <li>Gabung komunitas dev (Discord, Telegram, GitHub) dan ikut diskusi.</li>
+    <li>Gunakan badge GitHub (stars, forks, issues) untuk menunjukkan aktivitas.</li>
+    <li>Update proyek secara berkala agar tetap relevan dan hidup.</li>
+  </ul>
+</div>
+
+
+
+    </div>
+
+    <blockquote class="quote mx-auto mt-5 text-center fst-italic">
+        “Hari ini aku tenang. Aku tidak mengeluh, tidak curhat ke manusia.<br>
+        Hatiku fokus ke Allah, Sang Penolong terbaik. Semua kuhadapi dengan sabar, diam, dan doa. <br>
+        Ikut campur dengan urusan orang lain = menambah MASALAH”
+        <span class="d-block mt-2 fw-semibold">Keep calm &amp; stay cool.</span>
+    </blockquote>
+    <br>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Progress Bar and Strikethrough Logic
+    const checkboxes = document.querySelectorAll('.checkbox');
+    const progressBar = document.querySelector('.progress-bar');
+    const totalTasks = checkboxes.length;
+    let completedTasks = 0;
+
+    // Load saved state from localStorage
+    checkboxes.forEach(checkbox => {
+        const savedState = localStorage.getItem(checkbox.id);
+        if (savedState === 'true') {
+            checkbox.checked = true;
+            checkbox.nextElementSibling.classList.add('task-completed');
+            completedTasks++;
+        }
+    });
+
+    // Initial progress update
+    const initialProgress = (completedTasks / totalTasks) * 100;
+    progressBar.style.width = `${initialProgress}%`;
+    progressBar.textContent = `${Math.round(initialProgress)}%`;
+    progressBar.setAttribute('aria-valuenow', initialProgress);
+
+    // Update progress and strikethrough on checkbox change
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                checkbox.nextElementSibling.classList.add('task-completed');
+                completedTasks++;
+            } else {
+                checkbox.nextElementSibling.classList.remove('task-completed');
+                completedTasks--;
+            }
+
+            const progress = (completedTasks / totalTasks) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressBar.textContent = `${Math.round(progress)}%`;
+            progressBar.setAttribute('aria-valuenow', progress);
+
+            // Save state to localStorage
+            localStorage.setItem(checkbox.id, checkbox.checked);
+        });
+    });
+    </script>
+</body>
